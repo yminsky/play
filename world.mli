@@ -14,6 +14,6 @@ type key =
 val big_bang
   :  'world
   -> display:('world -> scene)
-  -> tick:('world -> Time.t -> Time.t -> 'world)
+  -> tick:('world -> Time.t -> 'world)
   -> key:('world -> key -> 'world)
   -> unit
