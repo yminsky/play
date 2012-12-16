@@ -31,11 +31,11 @@ module type API = sig
 
   val poly          : posn list -> color -> image
   val line          : posn -> posn -> color -> image
+  val circle        : posn -> float -> color -> image
   val overlay       : image list -> image
   val shift         : image -> posn -> image
   val set_pin       : image -> posn -> image
   val pin_to_center : image -> image
-  val clear_pin     : image -> image
   val pin           : image -> posn option
 
   val (+:) : scene -> image -> scene

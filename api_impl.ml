@@ -95,11 +95,12 @@ module Line_spec = struct
     Canvas.create_line canvas ~xys:(to_xys t) ~fill:`Green
 end
 
+module Line = Make_shape(Line_spec)
 
 module App = struct
-  type t = { toplevel: Widget.toplevel Widget.widget;
-             frame: Widget.frame Widget.widget;
-             canvas: Widget.canvas Widget.widget;
+  type t = { toplevel : Widget.toplevel Widget.widget ;
+             frame    : Widget.frame    Widget.widget ;
+             canvas   : Widget.canvas   Widget.widget ;
            }
 
   let run ~width ~height =
