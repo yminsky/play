@@ -21,15 +21,11 @@ val yellow : color
 
 type base_image =
 | Poly of posn * posn list * color
-| Line of posn * posn * color
-| Circle of posn * float * color
 
 type image
 
 val empty_image : image
 val poly : posn list -> color -> image
-val line : posn -> posn -> color -> image
-val circle : float -> color -> image
 
 val scale  : ?around:posn -> by:float  -> image -> image
 val rotate : ?around:posn -> deg:float -> image -> image

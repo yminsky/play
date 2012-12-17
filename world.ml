@@ -23,8 +23,6 @@ let special_key_to_key = function
 let gl_color {r;g;b} = (r,g,b)
 
 let draw_base_image = function
-  | Circle _ -> assert false
-  | Line _ -> assert false
   | Poly (first,rest,color) ->
     GlDraw.begins `polygon;
     GlDraw.color (gl_color color);

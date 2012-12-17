@@ -65,11 +65,6 @@ let yellow = color 1.   1.   0.
 
 type base_image =
 | Poly   of posn * posn list * color
-| Line   of posn * posn * color
-| Circle of posn * float * color
-
-let posn_map {x;y} ~f =
-  { x = f x; y = f y }
 
 let merge_posn p1 p2 ~f =
   { x = f p1.x p2.x
@@ -83,11 +78,6 @@ let base_corners = function
   | Poly (p, ps, _) ->
     let corner merge = List.fold ~f:merge ~init:p ps in
     (corner posn_min, corner posn_max)
-  | Line (p1,p2,_) ->
-    (posn_min p1 p2, posn_max p1 p2)
-  | Circle (p,r,_) ->
-    (posn_map p ~f:(fun x -> x -. r),
-     posn_map p ~f:(fun x -> x +. r))
 
 let merge_corners (ll1,ur1) (ll2,ur2) =
   (posn_min ll1 ll2, posn_max ur1 ur2)
@@ -97,10 +87,6 @@ let scale_base_image_around b ~around ~by =
   match b with
   | Poly (p, ps,c) ->
     Poly (sp p, List.map ~f:sp ps, c)
-  | Line (p1,p2,c) ->
-    Line (sp p1, sp p2, c)
-  | Circle (p,r,c) ->
-    Circle (sp p, r *. by, c)
 
 type combo =
 | Base of base_image
@@ -129,8 +115,6 @@ let rotate ?(around=origin) ~deg image  =
     let rot p = fast_rot (p -! around) cs +! around in
     combo_map combo ~f:(function
     | Poly (p,ps,c) -> Poly (rot p, List.map ~f:rot ps, c)
-    | Line (p1,p2,c) -> Line (rot p1, rot p2, c)
-    | Circle (p,r,c) -> Circle (rot p, r, c)
     ))
 
 let scale_around image ~around ~by =
@@ -148,21 +132,11 @@ let poly edges color =
   | hd :: tl ->
     Some (Base (Poly (hd,tl,color)))
 
-let line p1 p2 color =
-  Some (Base (Line (p1,p2,color)))
-
-let circle radius color =
-  Some (Base (Circle (origin,radius,color)))
-
 let shift image offset =
   Option.map image ~f:(fun combo ->
     if offset.x = 0. && offset.y = 0. then combo
     else
       let combo = combo_map combo ~f:(function
-        | Circle (p,r,c) ->
-          Circle (p +! offset, r, c)
-        | Line (p1,p2,c) ->
-          Line (p1 +! offset, p2 +! offset,c)
         | Poly (p,ps,c) ->
           let f p = p +! offset in
           Poly (f p, List.map ~f ps, c)
