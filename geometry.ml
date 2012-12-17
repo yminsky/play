@@ -3,6 +3,7 @@ open Core.Std
 type posn = { x: float; y: float }
 
 let posn x y = {x;y}
+
 let (+!) a b = { x = a.x +. b.x;
                  y = a.y +. b.y;
                }
@@ -10,7 +11,9 @@ let (-!) a b = { x = a.x -. b.x;
                  y = a.y -. b.y;
                }
 
-let smult p c = { x = p.x *. c; y = p.y *. c }
+let smult p c = { x = p.x *. c
+                ; y = p.y *. c
+                }
 
 let pi = 2. *. asin 1.
 
@@ -37,7 +40,8 @@ let rot p deg =
 let _ = rot
 
 let scale_posn_around p ~around ~by =
-  smult (p -! around) by +! around
+  smult (p -! around) by
+  +! around
 
 let middle p1 p2 =
   smult (p1 +! p2) 0.5
