@@ -18,11 +18,11 @@ let square s color =
 
 let ship =
   rotate (square 25. black) ~deg:45.
-  +< square 10. blue
+  ++ square 10. blue
 
 let display w =
   empty_scene ~ll:(posn (-.200.) (-.200.)) ~ur:(posn 200. 200.) white
-  ++ shift ship w.pos
+  +: shift ship w.pos
 
 let kick = 0.2
 

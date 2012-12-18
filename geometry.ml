@@ -162,8 +162,7 @@ let overlay ~topfirst i1 i2 =
       else Top_bottom (c2,c1)
     )
 
-let (+<) = overlay ~topfirst:false
-let (+>) = overlay ~topfirst:true
+let (++) = overlay ~topfirst:false
 
 let image_iter image ~f =
   Option.iter image ~f:(fun combo ->
@@ -189,7 +188,7 @@ let scene_ur s = s.ur
 let image s = s.image
 let bg s = s.bg
 
-let (++) s i =
-  { s with image = s.image +< i }
+let (+:) s i =
+  { s with image = s.image ++ i }
 
 

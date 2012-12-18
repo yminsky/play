@@ -32,8 +32,7 @@ val rotate : ?around:posn -> deg:float -> image -> image
 val shift : image -> posn -> image
 val recenter : image -> image
 
-val (+<) : image -> image -> image
-val (+>) : image -> image -> image
+val (++) : image -> image -> image
 
 (** Iterates over the [base_image]'s in the image, from lowest to highest,
     providing an offset for each [base_image].  *)
@@ -47,4 +46,4 @@ val scene_ur : scene -> posn
 val image : scene -> image
 val bg : scene -> color
 
-val (++) : scene -> image -> scene
+val (+:) : scene -> image -> scene
