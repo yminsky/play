@@ -70,7 +70,7 @@ let convex_hull ps =
             else ()
         in
         pop ();
-        Stack.push envelope p 
+        Stack.push envelope p
       );
       Stack.to_list envelope
     in
@@ -93,7 +93,7 @@ let convex_test () =
           = [posn 1. 1.001; posn 0. 0.;  posn 3. 3.]);
 ;;
 
-let _ = convex_hull
+let _ = convex_test
 
 type color = { r: float; g: float; b: float }
 let color r g b = {r;g;b}

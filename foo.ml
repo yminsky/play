@@ -3,15 +3,15 @@ open Geometry
 open World
 
 type platform = { height: float;
-		  start: float;
-		  stop: float;
-		}
+                  start: float;
+                  stop: float;
+                }
 
 let platform height start stop = { height; start; stop }
 
 type world = { pos: posn;
                vel: posn;
-	       plats: platform list
+               plats: platform list
              }
 
 let onplat plat posn =
@@ -30,25 +30,25 @@ let square s color =
 
 let ship =
   rotate (square 25. (color 0.3 0.3 1.)) ~deg:45.
-  +< square 10. yellow
+  ++ square 10. yellow
 
 let platform_image p =
   let path = [ posn p.start p.height
-	     ; posn p.stop  p.height
-	     ; posn p.stop  (p.height -. 5.)
-	     ; posn p.start (p.height -. 5.)
-	     ]
+             ; posn p.stop  p.height
+             ; posn p.stop  (p.height -. 5.)
+             ; posn p.start (p.height -. 5.)
+             ]
   in
   poly path orange
 
 let platforms ps =
   List.fold ps ~init:empty_image
-    ~f:(fun x p -> x +< platform_image p)
+    ~f:(fun x p -> x ++ platform_image p)
 
 let display w =
-  empty_scene ~ll:(posn (-.200.) (-.200.)) ~ur:(posn 200. 200.) white
-  ++ platforms w.plats
-  ++ shift ship w.pos
+  empty_scene ~ll:(posn (-.500.) (-.200.)) ~ur:(posn 500. 200.) white
+  +: platforms w.plats
+  +: shift ship w.pos
 
 let rec on_some_plat plats posn =
   match plats with
@@ -65,15 +65,15 @@ let tick w _ =
     then { w with vel = origin;}
     else
       { w with
-	pos = w.pos +! w.vel;
-	vel = w.vel +! posn 0. (-.0.008);
+        pos = w.pos +! w.vel;
+        vel = w.vel +! posn 0. (-.0.008);
       }
   else
     let new_vel =
       if w.vel.y < 3.
       then if w.vel.y > -3.
-	then w.vel +! posn 0. (-.0.008)
-	else { w.vel with y = -3.}
+        then w.vel +! posn 0. (-.0.008)
+        else { w.vel with y = -3.}
       else { w.vel with y = 3.}
     in
     { w with
@@ -87,11 +87,11 @@ let world =
   { pos = origin;
     vel = origin;
     plats = [ platform (-20.) 50. 100.
-	    ; platform 40. (-30.) 20.
-	    ; platform (-80.) (-30.) (150.)
-	    ; platform 120.  (-30.) 30.
-	    ; platform (-195.) (-200.)200.
-	    ]
+            ; platform 40. (-30.) 20.
+            ; platform (-80.) (-30.) (150.)
+            ; platform 120.  (-30.) 30.
+            ; platform (-195.) (-200.)200.
+            ]
   }
 
 
