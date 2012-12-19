@@ -10,6 +10,7 @@ val origin : posn
 
 type color = { r: float; g: float; b: float }
 
+val color : float -> float -> float -> color
 val black  : color
 val blue   : color
 val green  : color
