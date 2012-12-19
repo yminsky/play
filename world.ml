@@ -56,9 +56,7 @@ let big_bang world ~display ~tick ~key =
     in
     let rec timer_loop () =
       let start = Time.now () in
-      let world' = tick (fst !world) start in
-      let new_world = tick world' start in
-      set_world new_world;
+      set_world (tick (fst !world) start);
       let after = Time.now () in
       let next = Time.add start granularity in
       let remaining = Time.diff next after in
