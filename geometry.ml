@@ -1,6 +1,7 @@
 open Core.Std
 
 type posn = { x: float; y: float }
+with compare
 
 let posn x y = {x;y}
 
@@ -49,6 +50,50 @@ let middle p1 p2 =
 let origin = { x = 0.; y = 0. }
 let negate p = { x = -. p.x; y = -. p.y }
 ;;
+
+let cross_product p1 p2 =
+  p1.x *. p2.y -. p1.y *. p2.x
+;;
+
+let convex_hull ps =
+  if List.length ps <= 1 then ps else
+    (* Computes an upper or lower envelope from a sorted sequence of posns *)
+    let compute_envelope ps =
+      let envelope = Stack.create () in
+      List.iter ps ~f:(fun p ->
+        let rec pop () =
+          match Stack.to_list envelope with
+          | [] | [_] ->  ()
+          | a :: b :: _  ->
+            if cross_product (a -! p) (b -! p) <= 0. then
+              (ignore (Stack.pop envelope : posn option); pop ())
+            else ()
+        in
+        pop ();
+        Stack.push envelope p 
+      );
+      Stack.to_list envelope
+    in
+    let ps = List.sort ps ~cmp:compare_posn |! List.dedup in
+    let lower = compute_envelope ps in
+    let upper = compute_envelope (List.rev ps) in
+    List.tl_exn lower @ List.tl_exn upper
+
+let convex_test () =
+  assert (convex_hull [posn 0. 0.] = [posn 0. 0.]);
+  assert (convex_hull [posn 0. 0.; posn 10. 3.] = [posn 0. 0.; posn 10. 3.]);
+  assert (convex_hull [posn 10. 3.; posn 0. 0.] = [posn 0. 0.; posn 10. 3.]);
+  assert (convex_hull [posn 10. 3.; posn 0. 0.; posn 3. 4.]
+          = [posn 3. 4.; posn 0. 0.; posn 10. 3.]);
+  assert (convex_hull [posn 10. 3.; posn 5. 0.; posn 3. 4.; posn 5. 1.]
+          = [posn 3. 4.; posn 5. 0.; posn 10. 3.]);
+  assert (convex_hull [posn 0. 0.; posn 1. 1.; posn 3. 3.]
+          = [posn 0. 0.; posn 3. 3.]);
+  assert (convex_hull [posn 0. 0.; posn 3. 3.; posn 1. 1.001]
+          = [posn 1. 1.001; posn 0. 0.;  posn 3. 3.]);
+;;
+
+let _ = convex_hull
 
 type color = { r: float; g: float; b: float }
 let color r g b = {r;g;b}
