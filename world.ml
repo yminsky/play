@@ -68,7 +68,7 @@ let scale_wh scene (w,h) =
   (Float.to_int w, Float.to_int h)
 ;;
 
-let start_world world ~w ~h ~display ~tick ~key =
+let start_world world ~w ~h ~display ~tick ~key ~key_up ~granularity =
   (* Setup some shared state *)
   let state = State.create world display in
   let render () =
@@ -85,7 +85,6 @@ let start_world world ~w ~h ~display ~tick ~key =
     Gl.flush ();
     Glut.swapBuffers ()
   in
-  let granularity = sec 0.02 in
   let rec timer_loop () =
     let start = Time.now () in
     let world = tick (State.world state) start in
@@ -106,33 +105,42 @@ let start_world world ~w ~h ~display ~tick ~key =
   timer_loop ();
   Glut.displayFunc ~cb:render;
   Glut.idleFunc ~cb:(Some Glut.postRedisplay);
-  Glut.keyboardFunc ~cb:(fun ~key:key_num ~x:_ ~y:_ ->
-    State.set state (key (State.world state)
+
+  let on_key ~up ~key:key_num ~x:_ ~y:_ =
+    let cb = if up then key_up else key in
+    State.set state (cb (State.world state)
                        (Char (Char.of_int_exn key_num)))
-  );
-  Glut.keyboardFunc ~cb:(fun ~key:key_num ~x:_ ~y:_ ->
-    State.set state (key (State.world state)
-                       (Char (Char.of_int_exn key_num)))
-  );
-  Glut.specialFunc ~cb:(fun ~key:special_key ~x:_ ~y:_ ->
+  in
+  Glut.keyboardFunc   ~cb:(on_key ~up:false);
+  Glut.keyboardUpFunc ~cb:(on_key ~up:true);
+
+  let on_special_key ~up ~key:special_key ~x:_ ~y:_ =
     let new_key = special_key_to_key special_key in
+    let cb = if up then key_up else key in
     Option.iter new_key ~f:(fun k ->
-      State.set state (key (State.world state) k)));
+      State.set state (cb (State.world state) k))
+  in
+  Glut.specialFunc   ~cb:(on_special_key ~up:false);
+  Glut.specialUpFunc ~cb:(on_special_key ~up:true);
+
   Glut.mainLoop ()
 
-
-
-let big_bang world ~display ~tick ~key =
+let big_bang ~display ~tick ~key ?(key_up=(fun w _ -> w)) world =
   let command =
     Command.basic
       ~summary:"Test OpenGL program"
       Command.Spec.(
+        let span = Arg_type.create Time.Span.of_string in
         empty
         +> flag "-width"  (optional_with_default 1024 int) ~doc:" Max screen width"
         +> flag "-height" (optional_with_default 768 int) ~doc:" Max screen height"
+        +> flag "-granularity" (optional_with_default (sec 0.02) span)
+          ~doc:" Time granularity"
       )
-      (fun w h () -> start_world world ~w ~h ~display ~tick ~key)
+      (fun w h granularity () ->
+        start_world world ~w ~h ~display ~tick ~key ~key_up ~granularity)
   in
   let argv = Array.to_list (Glut.init ~argv:Sys.argv) in
   Command.run ~argv command
+
 

@@ -29,11 +29,24 @@ let fast_rot {x;y} {cos;sin} =
   ; y = -. sin *. x +. y *. cos
   }
 
-let cs_of_deg deg =
+let deg_cs_table = Float.Table.create ()
+
+let base_cs_of_deg deg =
   let rad = d2r deg in
   let cos = cos rad in
   let sin = sin rad in
   { cos; sin }
+
+let () =
+  List.iter (List.range 0 9) ~f:(fun i ->
+    let deg = float i *. 45. in
+    Hashtbl.replace deg_cs_table ~key:deg ~data:(base_cs_of_deg deg)
+  )
+
+let cs_of_deg deg =
+  match Hashtbl.find deg_cs_table deg with
+  | Some x -> x
+  | None -> base_cs_of_deg deg
 
 let rot p deg =
   fast_rot p (cs_of_deg deg)
@@ -93,7 +106,7 @@ let convex_test () =
           = [posn 1. 1.001; posn 0. 0.;  posn 3. 3.]);
 ;;
 
-let _ = convex_test
+let () = convex_test ()
 
 type color = { r: float; g: float; b: float }
 let color r g b = {r;g;b}
