@@ -246,7 +246,7 @@ let scene_ur s = s.ur
 let image s = s.image
 let bg s = s.bg
 
-let (+:) s i =
+let (+>) s i =
   { s with image = s.image ++ i }
 
 

@@ -47,4 +47,4 @@ val scene_ur : scene -> posn
 val image : scene -> image
 val bg : scene -> color
 
-val (+:) : scene -> image -> scene
+val (+>) : scene -> image -> scene

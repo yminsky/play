@@ -21,10 +21,10 @@ let grav = posn 0. (-0.015)
 
 let acc_of_thrust thrust =
   let zero = posn 0. 0. in
-  (if thrust.up then posn 0. (-. kick) else zero)
-  +! (if thrust.down then posn 0. kick else zero)
-  +! (if thrust.left then posn kick 0. else zero)
-  +! (if thrust.right then posn (-.kick) 0. else zero)
+  (if    thrust.up    then posn (  0.  ) (-. kick) else zero)
+  +! (if thrust.down  then posn (  0.  ) (   kick) else zero)
+  +! (if thrust.left  then posn (  kick) (   0.  ) else zero)
+  +! (if thrust.right then posn (-.kick) (   0.  ) else zero)
 
 let some_thrust {left;right;up;down} =
   up || left || right || down
@@ -33,28 +33,47 @@ type dir = Dir_up | Dir_down | Dir_left | Dir_right
 
 let get_thrust thrust dir =
   match dir with
-  | Dir_up -> thrust.up
-  | Dir_down -> thrust.down
-  | Dir_left -> thrust.left
+  | Dir_up    -> thrust.up
+  | Dir_down  -> thrust.down
+  | Dir_left  -> thrust.left
   | Dir_right -> thrust.right
 
 type platform = { height: float;
-                  start: float;
-                  stop: float;
+                  start:  float;
+                  stop:   float;
+		  color:  color;
                 }
 
-let platform height start stop = { height; start; stop }
+let platform color height start stop =
+  { color; height
+  ; start = min start stop
+  ; stop = max start stop
+  }
+
+type state =
+| Ordinary
+| Game_over
+| Won
 
 type world = { pos: posn;
                vel: posn;
-               plats: platform list;
-               thrust: thrust;
+               platso: platform list;
+               platsr: platform list;
+	       platsg: platform list;
+	       thrust: thrust;
                time: Time.t;
+	       state: state;
              }
 
 let onplat plat posn =
   ((posn.x <  plat.stop) && (posn.x > plat.start))
   && (posn.y > (plat.height +. 5.) && (posn.y < (plat.height +. 10.)))
+
+let botplat plat posn =
+  (posn.x <  plat.stop)
+  && (posn.x > plat.start)
+  && (posn.y < (plat.height -. 5.))
+  && (posn.y > (plat.height -. 10.))
 
 let square s color =
   let h = s /. 2. in
@@ -73,7 +92,7 @@ let platform_image p =
              ; posn p.start (p.height -. 5.)
              ]
   in
-  poly path orange
+  poly path p.color
 
 let platforms ps =
   List.fold ps ~init:empty_image
@@ -110,9 +129,9 @@ let ship thrust time =
         shift t (posn 0. 10.)
       in
       match dir with
-      | Dir_up -> base
-      | Dir_down -> rotate base ~deg:180.
-      | Dir_left -> rotate base ~deg:270.
+      | Dir_up    -> base
+      | Dir_down  -> rotate base ~deg:180.
+      | Dir_left  -> rotate base ~deg:270.
       | Dir_right -> rotate base ~deg:90.
  in
   rotate (square 25. base_color) ~deg:45.
@@ -122,54 +141,133 @@ let ship thrust time =
   ++ corner Dir_left
   ++ corner Dir_right
 
-let display w =
-  bg
-  +: platforms w.plats
-  +: shift (ship w.thrust w.time) w.pos
+let big_x = 
+  let l = 300. in
+  let w = 30.  in
+  let rect = [ posn (-. l) (-. w)
+	     ; posn (-. l) (   w)
+	     ; posn (   l) (   w)
+	     ; posn (   l) (-. w)
+	     ]
+  in
+  rotate    (poly rect red) ~deg:( 45.)
+  ++ rotate (poly rect red) ~deg:(-45.)
 
+let check =
+  let w = 30. in
+  let rect x = [ posn (-. x) (-. w)
+	       ; posn (   w) (-. w)
+	       ; posn (   w) (   w)
+	       ; posn (-. x) (   w)
+	       ]
+  in
+  rotate (poly (rect 100.) green) ~deg:45.
+  ++ rotate (poly (rect 300.) green) ~deg:(45. +. 90.) 
+
+let biggy =
+  let l = 300. in
+  let w = 30. in
+  let rect = [posn (-. l) (-. w)
+             ;posn (-. l) (   w)
+	     ;posn (   l) (   w)
+	     ;posn (   l) (-. w)
+	     ]
+  in
+  let h = 100.
+  in
+  let recty = [posn (-. h) (-. w)
+	      ;posn (-. h) (   w)
+	      ;posn (   h) (   w)
+	      ;posn (   h) (-. w)
+	      ]
+  in
+  rotate   (poly rect green) ~deg:( 45.)
+  ++ rotate (poly recty green) ~deg:(-.45.)
+let display w =
+  let base_image = 
+    bg
+    +> platforms w.platso
+    +> platforms w.platsr
+    +> platforms w.platsg
+    +> shift (ship w.thrust w.time) w.pos
+  in
+  match w.state with
+  | Ordinary  -> base_image
+  | Game_over -> base_image +> big_x
+  | Won -> base_image +> check
 let rec on_some_plat plats posn =
   match plats with
   | [] -> false
-  | hd :: tl ->
-    if onplat hd posn then true
-    else on_some_plat tl posn
+  | pocketidiot :: roastedmoron's  ->
+    if onplat pocketidiot posn then true
+    else on_some_plat roastedmoron's posn
+
+let rec below_some_plat plats posn =
+  match plats with
+  | [] -> false
+  | pocketidiot :: roastedmoron's  ->
+    if botplat pocketidiot posn then true
+    else below_some_plat roastedmoron's posn
+
 
 let tick w time =
-  if on_some_plat w.plats w.pos && w.vel.y < 0.
-  then
-    { w with vel = origin; time}
-  else
-    let new_vel =
-      if w.vel.y > 5.       then { w.vel with y =  5.}
-      else if w.vel.y < -5. then { w.vel with y = -5.}
-      else w.vel +! grav +! acc_of_thrust w.thrust
-    in
-    let wrap pos =
-      if pos.x <  (scene_ll bg).x then
-        { pos with x = (scene_ur bg).x }
-      else if pos.x > (scene_ur bg).x then
-        { pos with x = (scene_ll bg).x }
-      else
-        pos
-    in
-    { w with
-      pos = wrap (w.pos +! w.vel);
-      vel = new_vel;
-      time;
-    }
+  match w.state with
+  | Game_over ->
+    w
+  | Won ->
+    w
+  | Ordinary ->
+    if on_some_plat w.platsr w.pos
+    then { w with state = Game_over }
+    else if on_some_plat w.platsg w.pos
+    then { w with state = Won }
+    else if on_some_plat w.platso w.pos && w.vel.y < 0.
+    then
+      { w with
+	time
+	; vel = origin
+      }
+    else if below_some_plat w.platso w.pos && w.vel.y > 0.
+    then   
+      { w with
+	time
+	; vel = origin 
+      }
+    else
+	let new_vel =
+	  if w.vel.y > 5.       then { w.vel with y =  5.}
+	  else if w.vel.y < -5. then { w.vel with y = -5.}
+	  else w.vel +! grav +! acc_of_thrust w.thrust
+	in
+	let wrap pos =
+	  if pos.x <  (scene_ll bg).x then
+            { pos with x = (scene_ur bg).x }
+	  else if pos.x > (scene_ur bg).x then
+            { pos with x = (scene_ll bg).x }
+	  else
+            pos
+	in
+	{ w with
+	  pos = wrap (w.pos +! w.vel);
+	  vel = new_vel;
+	  time;
+	}
 
 
 let world =
-  { pos = origin;
-    vel = origin;
-    plats = [ platform (-20.) 50. 100.
-            ; platform 40. (-30.) 20.
-            ; platform (-80.) (-30.) (150.)
-            ; platform 120.  (-30.) 30.
-            ; platform (-195.) (-500.) 500.
-            ];
-    thrust = init_thrust;
-    time = Time.now ();
+  { pos = origin
+  ; vel = origin
+  ; platso = [ platform orange  (-20.)    50.    100.
+            ; platform orange    40.   (-30.)    20.
+            ; platform orange  (-80.)  (-30.)  (150.)
+            ; platform orange   120.   (-30.)    30.
+            ; platform orange (-195.) (-500.)   500.
+	    ]
+  ; platsr = [ platform red (-60.) (-50.) (-120.) ]
+  ; platsg = [ platform green 170. 80. 130. ]
+  ; thrust = init_thrust
+  ; time = Time.now ()
+  ; state = Ordinary
   }
 
 
